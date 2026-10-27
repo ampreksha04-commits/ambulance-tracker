@@ -25,6 +25,10 @@ function createApp(store, { apiKey } = {}) {
      })
    );
 
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
   app.get("/api/ambulances", async (req, res, next) => {
     try {
       res.json(await store.list());
