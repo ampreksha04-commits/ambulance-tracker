@@ -1,102 +1,81 @@
-# Live Ambulance Tracker
+# Live Ambulance Tracking System
 
-A full-stack web app that shows the live location of ambulances. It extends my IoT digital twin project (ESP32 + GPS), where a device sends its position to the cloud, by adding a REST API, a database and a React dashboard.
+A responsive emergency fleet operations dashboard built with React and Vite. It provides an interactive Bengaluru map, simulated ambulance telemetry, fleet status monitoring, location history, analytics, and browser-persisted demo settings.
 
-## Tech stack
+## Features
 
-- **Front end:** React, Vite
-- **Back end:** Node.js, Express, REST API
-- **Database:** MySQL (parameterized queries), with an in-memory store for local development and tests
-- **Testing:** Jest, Supertest
-- **CI/CD:** GitHub Actions (tests and build on every push and pull request)
+- Interactive OpenStreetMap with simulated moving ambulance markers, vehicle popups, fit-fleet and Bengaluru controls.
+- Fleet overview metrics, searchable and filterable vehicle table, speed sorting, and a vehicle details panel.
+- Separate Overview, Live Map, Ambulance Fleet, Location History, Analytics, and Settings views.
+- Pause/resume simulation, configurable polling and stale thresholds, and simulation speed controls.
+- API connection warning and a local simulation fallback when the backend cannot be reached.
+- Responsive layout for desktop, tablet, and mobile.
 
-## How it works
+All locations are generated demo data around Bengaluru. The dashboard does not connect to real GPS devices.
 
-```
-ESP32 + GPS  --POST location-->  Express REST API  -->  MySQL
-                                        ^
-                       React dashboard polls every 3 seconds
-```
+## Technology
 
-## Run it locally
+- React 18, Vite, and JavaScript
+- React Leaflet, Leaflet, and OpenStreetMap tiles
+- Lucide React icons and Recharts
+- Existing Node.js/Express API and MySQL-ready store in `backend/`
 
-You need Node.js 18 or newer.
+## Screenshots
 
-**1. Start the API** (uses the in-memory store, so no database is needed)
+Add project screenshots here, for example `docs/screenshots/overview.png` and `docs/screenshots/analytics.png`.
 
-```bash
-cd backend
-npm install
-cp .env.example .env
-npm run dev
-```
+## Install and run
 
-**2. Start the dashboard** (in a second terminal)
+Use Node.js 18 or newer.
 
-```bash
+```powershell
 cd frontend
 npm install
 npm run dev
 ```
 
-Open the address Vite prints (usually http://localhost:5173).
+Open the Vite URL printed in the terminal, usually `http://localhost:5173`.
 
-**3. Send some data** (in a third terminal)
+To run the optional API in a second terminal:
 
-```bash
+```powershell
 cd backend
-API_KEY=change-me npm run simulate
+npm install
+npm run dev
 ```
 
-Two ambulances start moving on the dashboard.
+The Vite development server forwards `/api` requests to `http://localhost:4000`. The dashboard continues using simulated fleet data if the API is unavailable. To point it to another API, create `frontend/.env.local` with:
 
-### Using MySQL instead
-
-```bash
-docker compose up -d          # starts MySQL and creates the tables from backend/schema.sql
+```env
+VITE_API_BASE_URL=http://localhost:4000
 ```
 
-Then uncomment the `DB_*` lines in `backend/.env` and restart the API.
+Do not put API keys or passwords in frontend environment variables.
 
-## API
+## Simulation mode
 
-| Method | Endpoint | Description |
-|---|---|---|
-| GET | `/api/health` | Health check |
-| GET | `/api/ambulances` | Latest position of every ambulance |
-| POST | `/api/ambulances/:id/location` | Report a position. Body: `{ "lat": 12.97, "lng": 77.59, "speed": 45 }`. Requires the `x-api-key` header when `API_KEY` is set |
-| GET | `/api/ambulances/:id/history?limit=50` | Recent positions, newest first (max 200) |
+The simulation starts automatically with four distinct vehicles moving gradually along short generated paths in Bengaluru. It refreshes every three seconds by default, keeps an in-memory update history, and marks a vehicle stale when its last update exceeds the configured threshold. Use the sidebar connection control or the Live Map/Fleet page control to pause or resume movement. Settings can be changed from the Settings page and are saved in local storage.
 
-Example:
+## Architecture
 
-```bash
-curl -X POST http://localhost:4000/api/ambulances/AMB-1/location \
-  -H "Content-Type: application/json" -H "x-api-key: change-me" \
-  -d '{"lat": 12.9716, "lng": 77.5946, "speed": 50}'
-```
+- `frontend/src/services/simulation.js` owns the simulated fleet routes and in-memory update records.
+- `frontend/src/services/api.js` contains reusable health, list, detail, and location-write requests. It supports the existing backend routes and the planned generic API routes.
+- `frontend/src/App.jsx` owns shared fleet state and composes the navigable dashboard views and reusable UI components.
+- `backend/src/app.js` exposes the current Express API; `backend/src/store/` separates in-memory and MySQL persistence.
 
-## Tests
+## API readiness
 
-```bash
+The client supports `GET /api/health`, `GET /api/ambulances`, `GET /api/ambulances/:id`, and `POST /api/locations`. For compatibility with this repository's current server, detail and location writes can fall back to `/api/ambulances/:id/history` and `/api/ambulances/:id/location` respectively. The dashboard currently polls the list/health endpoints; simulated data remains the default unless an API base URL is configured.
+
+## Future integrations
+
+Connect the existing Node.js API to MySQL, then replace the demo location source with authenticated ESP32 GPS reports. AWS deployment can use a managed MySQL database, an API service, and static hosting/CDN for the Vite build. These integrations are not enabled by this demo dashboard.
+
+## Tests and build
+
+```powershell
 cd backend
 npm test
+cd ..\frontend
+npm run build
 ```
-
-The tests cover validation (out-of-range and wrong-type values), a malicious ambulance id, API key authentication, history ordering and 404 handling.
-
-## CI/CD
-
-`.github/workflows/ci.yml` runs the backend tests and the frontend build on every push to `main` and on every pull request.
-
-## Design decisions
-
-- **Input validation and parameterized SQL** on every endpoint, so user input never becomes part of a query.
-- **API key authentication** for devices that write data.
-- **Store interface** (`memory.js` and `mysql.js`), so the API can run and be tested without a database.
-- **Two tables:** `ambulances` holds the latest state for fast reads, and `locations` keeps the history.
-
-## Deploying to AWS (outline)
-
-1. Create an RDS MySQL instance and run `backend/schema.sql` on it.
-2. Run the API on EC2 (or Elastic Beanstalk) with the `DB_*`, `API_KEY` and `PORT` environment variables set.
-3. Build the dashboard with `VITE_API_URL` set to the API address, then host `frontend/dist` on S3 with CloudFront.

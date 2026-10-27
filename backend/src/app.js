@@ -16,8 +16,14 @@ function createApp(store, { apiKey } = {}) {
     }
     next();
   };
-
-  app.get("/api/health", (req, res) => res.json({ status: "ok" }));
+   app.get("/", (req, res) =>
+     res.json({
+       name: "Ambulance Tracker API",
+       status: "running",
+       dashboard: "http://localhost:5173",
+       endpoints: ["GET /api/health", "GET /api/ambulances", "POST /api/ambulances/:id/location", "GET /api/ambulances/:id/history"],
+     })
+   );
 
   app.get("/api/ambulances", async (req, res, next) => {
     try {
