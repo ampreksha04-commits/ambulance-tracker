@@ -1,0 +1,47 @@
+:root {
+  --bg: #edf0f3;
+  --panel: #ffffff;
+  --ink: #12202d;
+  --muted: #5b6b7a;
+  --line: #cfd8e0;
+  --signal: #d62839;
+  --stale: #b7791f;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+.shell { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; }
+
+.top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 20px; }
+h1 { margin: 0; font-size: 1.9rem; font-weight: 700; letter-spacing: -0.01em; }
+.summary { margin: 0; color: var(--muted); }
+
+.alert { background: #fdecee; border-left: 4px solid var(--signal); padding: 10px 14px; margin: 0 0 16px; }
+
+.grid { display: grid; grid-template-columns: minmax(0, 480px) minmax(0, 1fr); gap: 20px; align-items: start; }
+@media (max-width: 860px) { .grid { grid-template-columns: 1fr; } }
+
+.plot { width: 100%; height: auto; background: var(--panel); display: block; }
+.plot-frame { fill: none; stroke: var(--line); }
+.empty { background: var(--panel); border: 1px dashed var(--line); padding: 28px 20px; color: var(--muted); }
+
+.marker .dot { fill: var(--signal); }
+.marker.stale .dot { fill: var(--stale); }
+.marker .pulse { fill: var(--signal); opacity: 0.25; animation: pulse 2s ease-out infinite; transform-origin: center; }
+.tag { font-size: 12px; font-weight: 600; fill: var(--ink); }
+@keyframes pulse { from { transform: scale(0.4); opacity: 0.45; } to { transform: scale(1.3); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .marker .pulse { animation: none; } }
+
+.fleet { width: 100%; border-collapse: collapse; background: var(--panel); font-variant-numeric: tabular-nums; }
+.fleet caption { text-align: left; font-weight: 600; padding: 0 0 8px; }
+.fleet th, .fleet td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); font-size: 0.95rem; }
+.fleet thead th { color: var(--muted); font-weight: 600; font-size: 0.85rem; }
+.row-stale { color: var(--stale); }

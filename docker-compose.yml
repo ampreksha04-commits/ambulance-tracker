@@ -1,0 +1,11 @@
+# Optional: local MySQL for the API. Run: docker compose up -d
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: ambulance
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./backend/schema.sql:/docker-entrypoint-initdb.d/schema.sql
